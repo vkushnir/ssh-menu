@@ -3,25 +3,30 @@
 
 import re
 import sys
-from os import name, system, execvp
+from os import name, system, execvp, environ
 from os.path import expanduser
+from subprocess import check_call, check_output
+from collections import OrderedDict
 
 from bullet import Bullet, colors
-from collections import OrderedDict
+
+
+TMUX_ = "TMUX" in environ
 
 
 def main():
     ssh_config = expanduser("~/.ssh/config")
     hosts_ = _get_ssh_hosts(ssh_config)
 
-    host_ = _menu(hosts_, pfx1='✺ ', bullet='➤')
+    host = _menu(hosts_, pfx1='✺ ', bullet='➤')
     _clear()
-    if host_ == '':
+    if host == '':
         sys.exit(0)
 
     try:
-        print("Connecting to \"{}\" …".format(host_))
-        execvp("ssh", args=["ssh", host_])
+        print("Connecting to \"{}\" …".format(host))
+        _tmux_ssh(host)
+        execvp("ssh", args=["ssh", host])
     except Exception as e:
         sys.exit(e)
 
@@ -50,13 +55,16 @@ def _menu(hosts, parent='', separator='.', pfx1='* ', pfx2='  ', bullet='>'):
         _clear()
         if parent != '':
             print("\n    Choose ssh profile from {}:".format(parent[:-1]))
+            _tmux_display_message(parent[:-1])
         else:
             print("\n    Choose ssh profile:")
         choise_ = cli.launch()
 
         if choise_ == 'exit':
+            _tmux_display_message("exit …")
             return ''
         elif choise_.find(pfx1) >= 0:
+            _tmux_display_message("Selected item: \"{}\"".format(choise_[len(pfx1):]))
             result = _menu(hosts, parent + choise_[len(pfx1):] + separator, separator, pfx1, pfx2)
             if result != '':
                 return result
@@ -93,3 +101,32 @@ def _clear():
         system("cls")
     else:
         system("clear")
+
+
+# TMUX decorator
+def tmux(func):
+    def wrapper(*args, **kwargs):
+        if TMUX_:
+            func(*args, **kwargs)
+    return wrapper
+
+
+@tmux
+def _tmux_ssh(host):
+    check_call(["tmux", "display-message", "Connecting to \"{}\" ...".format(host)])
+    tmux_windows_ = check_output(["tmux", "list-windows", "-F", "#{window_index},#{window_name}"])\
+        .decode('utf-8').split()
+    ids_ = [id_ for (id_, host_) in [window_.split(',') for window_ in tmux_windows_] if host_ == "ssh:"+host]
+    if len(ids_) > 0:
+        execvp("tmux", args=["tmux", "select-window", "-t", ids_[0]])
+    else:
+        execvp("tmux", args=["tmux", "new-window", "-n", "ssh:" + host, "ssh " + host])
+
+
+@tmux
+def _tmux_display_message(message):
+    check_call(["tmux", "display-message", message])
+
+
+if __name__ == "__main__":
+    main()

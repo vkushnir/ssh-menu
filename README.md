@@ -44,6 +44,11 @@ $ source ~/.zshrc
 
 Now you can just enter `ssm` to open sshmenu
 
+## TMUX
+
+Checks if **TMUX** is running, and if so, it uses it.
+When ssh starts, a window is created with the name **ssh:host**. If the window already exists, it switches to the existing window. 
+
 ## Docker
 
 Running in docker (why? I don't know):
