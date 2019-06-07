@@ -55,16 +55,13 @@ def _menu(hosts, parent='', separator='.', pfx1='* ', pfx2='  ', bullet='>'):
         _clear()
         if parent != '':
             print("\n    Choose ssh profile from {}:".format(parent[:-1]))
-            _tmux_display_message(parent[:-1])
         else:
             print("\n    Choose ssh profile:")
         choise_ = cli.launch()
 
         if choise_ == 'exit':
-            _tmux_display_message("exit …")
             return ''
         elif choise_.find(pfx1) >= 0:
-            _tmux_display_message("Selected item: \"{}\"".format(choise_[len(pfx1):]))
             result = _menu(hosts, parent + choise_[len(pfx1):] + separator, separator, pfx1, pfx2)
             if result != '':
                 return result
