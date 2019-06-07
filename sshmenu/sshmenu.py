@@ -10,7 +10,6 @@ from collections import OrderedDict
 
 from bullet import Bullet, colors
 
-
 TMUX_ = "TMUX" in environ
 
 
@@ -20,7 +19,7 @@ def main():
 
     host = _menu(hosts_, pfx1='✺ ', bullet='➤')
     _clear()
-    if host == '':
+    if host == 'exit':
         sys.exit(0)
 
     try:
@@ -37,9 +36,12 @@ def _menu(hosts, parent='', separator='.', pfx1='* ', pfx2='  ', bullet='>'):
          [host.split(separator) for host in
           [host[len(parent):] for host in
            hosts if host.startswith(parent)]]]))
-
+    if parent == '':
+        exit_menu_ = ['exit']
+    else:
+        exit_menu_ = ['back', 'exit']
     cli = Bullet(
-        choices=host_menu_ + ['exit'],
+        choices=host_menu_ + exit_menu_,
         indent=0,
         align=4,
         margin=2,
@@ -59,14 +61,17 @@ def _menu(hosts, parent='', separator='.', pfx1='* ', pfx2='  ', bullet='>'):
             print("\n    Choose ssh profile:")
         choise_ = cli.launch()
 
-        if choise_ == 'exit':
+        if choise_ == 'back':
             return ''
+        elif choise_ == 'exit':
+            break
         elif choise_.find(pfx1) >= 0:
             result = _menu(hosts, parent + choise_[len(pfx1):] + separator, separator, pfx1, pfx2)
             if result != '':
                 return result
         else:
             return parent + choise_[len(pfx1):]
+    return 'exit'
 
 
 def _get_ssh_hosts(config_dir):
@@ -105,15 +110,16 @@ def tmux(func):
     def wrapper(*args, **kwargs):
         if TMUX_:
             func(*args, **kwargs)
+
     return wrapper
 
 
 @tmux
 def _tmux_ssh(host):
     check_call(["tmux", "display-message", "Connecting to \"{}\" ...".format(host)])
-    tmux_windows_ = check_output(["tmux", "list-windows", "-F", "#{window_index},#{window_name}"])\
+    tmux_windows_ = check_output(["tmux", "list-windows", "-F", "#{window_index},#{window_name}"]) \
         .decode('utf-8').split()
-    ids_ = [id_ for (id_, host_) in [window_.split(',') for window_ in tmux_windows_] if host_ == "ssh:"+host]
+    ids_ = [id_ for (id_, host_) in [window_.split(',') for window_ in tmux_windows_] if host_ == "ssh:" + host]
     if len(ids_) > 0:
         execvp("tmux", args=["tmux", "select-window", "-t", ids_[0]])
     else:
