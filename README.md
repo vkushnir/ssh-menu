@@ -49,6 +49,10 @@ Now you can just enter `ssm` to open sshmenu
 Checks if **TMUX** is running, and if so, it uses it.
 When ssh starts, a window is created with the name **ssh:host**. If the window already exists, it switches to the existing window. 
 
+add update environment to ~/.tmux.conf
+
+    set-option -g update-environment "SSH_AUTH_SOCK SSH_CONNECTION DISPLAY"
+     
 ## Docker
 
 Running in docker (why? I don't know):

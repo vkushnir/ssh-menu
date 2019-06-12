@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 import re
 import sys
@@ -7,24 +6,24 @@ from os import name, system, execvp, environ
 from os.path import expanduser
 from subprocess import check_call, check_output
 from collections import OrderedDict
-
 from bullet import Bullet, colors
+
 
 TMUX_ = "TMUX" in environ
 
-
+# TODO: Add configuration file option for menu theme
 def main():
     ssh_config = expanduser("~/.ssh/config")
     hosts_ = _get_ssh_hosts(ssh_config)
 
-    host = _menu(hosts_, pfx1='✺ ', bullet='➤')
+    host = _menu(hosts_)
     _clear()
     if host == 'exit':
         sys.exit(0)
 
     try:
-        print("Connecting to \"{}\" …".format(host))
-        _tmux_ssh(host)
+        print("Connecting to \"{}\" ...".format(host))
+        _tmux_ssh_window(host)
         execvp("ssh", args=["ssh", host])
     except Exception as e:
         sys.exit(e)
@@ -115,7 +114,7 @@ def tmux(func):
 
 
 @tmux
-def _tmux_ssh(host):
+def _tmux_ssh_window(host):
     check_call(["tmux", "display-message", "Connecting to \"{}\" ...".format(host)])
     tmux_windows_ = check_output(["tmux", "list-windows", "-F", "#{window_index},#{window_name}"]) \
         .decode('utf-8').split()
