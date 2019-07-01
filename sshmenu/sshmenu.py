@@ -86,7 +86,7 @@ def _get_ssh_hosts(config_dir):
         kv_ = _key_value(line)
         if len(kv_) > 1:
             key, value = kv_
-            if key.lower() == "host":
+            if key.lower() == "host" and value != "*":
                 hosts_.append(value)
     return hosts_
 
