@@ -7,6 +7,7 @@ from os.path import expanduser
 from subprocess import check_call, check_output
 from collections import OrderedDict
 from bullet import Bullet, colors
+from keyword import
 
 
 TMUX_ = "TMUX" in environ
